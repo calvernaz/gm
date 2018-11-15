@@ -18,7 +18,7 @@ type GitManagerConfig struct {
 // It returns an error in case it can create or open the file, the caller is
 // responsible for close the file.
 func (gmc *GitManagerConfig) Open(path string) error {
-	if f, err := xdgdir.Config.Create(path); err == nil {
+	if f, err := xdgdir.Config.Open(path); err == nil {
 		gmc.path = path
 		gmc.file = f
 	} else {
@@ -35,4 +35,7 @@ func (gmc *GitManagerConfig) Close() {
 			log.Error(err)
 		}
 	}
+}
+func (gmc *GitManagerConfig) File() *os.File {
+	return gmc.file
 }

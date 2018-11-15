@@ -44,6 +44,7 @@ var (
 	Version = false
 )
 
+
 // flags is a map of flag registration functions keyed by flag name,
 // used by Parse to register specific (or all) flags.
 var flags = map[string]*flagVar{

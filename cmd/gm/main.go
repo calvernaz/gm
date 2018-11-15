@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -26,25 +27,18 @@ For a list of available subcommands and global flags, run
 
 var (
 	configPath = filepath.Join("gm", "gm.json")
-	commands   = map[string]func(*State, ...string){}
+	commands   = map[string]func(*State, ...string){
+		"config": (*State).config,
+	}
 )
 
 type State struct {
 	*subcmd.State
 	configFile []byte // The contents of the config file we loaded.
+	gmc gm.GitManagerConfig
 }
 
 func main() {
-	gmc := gm.GitManagerConfig{Version: version}
-
-	// open the git manager config
-	err := gmc.Open(configPath)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		gmc.Close()
-		return
-	}
-
 	state, args, ok := setup(flag.CommandLine, os.Args[1:])
 	if !ok || len(args) == 0 {
 		help()
@@ -53,7 +47,12 @@ func main() {
 		help(args[1:]...)
 	}
 
+
+	gmc := gm.GitManagerConfig{Version: version}
+
+	state.gmc = gmc
 	state.run(args)
+
 	state.ExitNow()
 }
 
@@ -145,7 +144,20 @@ func newState(name string) *State {
 // init initializes the State with what is required to run the subcommand,
 // usually including setting up a Config.
 func (s *State) init() {
+	// open the git manager config
+	err := s.gmc.Open(configPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		s.gmc.Close()
+		return
+	}
 
+	data, err := ioutil.ReadAll(s.gmc.File())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "\tError reading config file: %v", err)
+		return
+	}
+	s.configFile = data
 }
 
 // getCommand looks up the command named by op.
@@ -160,7 +172,7 @@ func (s *State) getCommand(op string) func(*State, ...string) {
 	if fn != nil {
 		return fn
 	}
-	path, err := exec.LookPath("upspin-" + op)
+	path, err := exec.LookPath("gm-" + op)
 	if err == nil {
 		return func(s *State, args ...string) {
 			s.runCommand(path, append(flags.Args(), args...)...)
@@ -184,7 +196,19 @@ func (s *State) runCommand(path string, args ...string) {
 
 // run runs a single command specified by the arguments, which should begin with
 // the subcommand ("ls", "info", etc.).
-func (state *State) run(args []string) {
-	cmd := state.getCommand(args[0])
-	cmd(state, args[1:]...)
+func (s *State) run(args []string) {
+	cmd := s.getCommand(args[0])
+	cmd(s, args[1:]...)
+}
+
+// writeOut writes to the named file or to stdout if it is empty
+func (s *State) writeOut(file string, data []byte) {
+	// Write to outfile or to stdout if none set
+	if file == "" {
+		_, err := s.Stdout.Write(data)
+		if err != nil {
+			s.Exitf("copying to output failed: %v", err)
+		}
+		return
+	}
 }
