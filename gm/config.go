@@ -1,15 +1,21 @@
 package gm
 
 import (
+	"github.com/pkg/errors"
 	"os"
-
+	"path/filepath"
+	
 	"github.com/opentracing/opentracing-go/log"
 	"go4.org/xdgdir"
 )
 
+var (
+	configPath = filepath.Join("gm", "gm.json")
+)
+
 type GitManagerConfig struct {
 	Version string
-
+	
 	path string
 	file *os.File
 }
@@ -18,13 +24,25 @@ type GitManagerConfig struct {
 // It returns an error in case it can create or open the file, the caller is
 // responsible for close the file.
 func (gmc *GitManagerConfig) Open(path string) error {
-	if f, err := xdgdir.Config.Open(path); err == nil {
-		gmc.path = path
-		gmc.file = f
-	} else {
+	if path == "" {
+		path = configPath
+	}
+	
+	f, err := xdgdir.Config.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			if file, err := xdgdir.Config.Create(path); err == nil {
+				gmc.file = file
+				gmc.path = path
+				return nil
+			}
+			return errors.New("failed to create config file")
+		}
 		return err
 	}
-	return nil
+	gmc.file = f
+	gmc.path = path
+	return err
 }
 
 // Close close the configuration file

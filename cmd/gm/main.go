@@ -7,12 +7,11 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"sort"
 	"strings"
-
-	"github.com/calvernaz/gm"
+	
 	"github.com/calvernaz/gm/flags"
+	"github.com/calvernaz/gm/gm"
 	"github.com/calvernaz/gm/subcmd"
 )
 
@@ -26,16 +25,16 @@ For a list of available subcommands and global flags, run
 )
 
 var (
-	configPath = filepath.Join("gm", "gm.json")
-	commands   = map[string]func(*State, ...string){
+	commands = map[string]func(*State, ...string){
 		"config": (*State).config,
+		"add":    (*State).add,
 	}
 )
 
 type State struct {
 	*subcmd.State
 	configFile []byte // The contents of the config file we loaded.
-	gmc gm.GitManagerConfig
+	gmc        gm.GitManagerConfig
 }
 
 func main() {
@@ -46,13 +45,12 @@ func main() {
 	if args[0] == "help" {
 		help(args[1:]...)
 	}
-
-
+	
 	gmc := gm.GitManagerConfig{Version: version}
-
+	
 	state.gmc = gmc
 	state.run(args)
-
+	
 	state.ExitNow()
 }
 
@@ -66,7 +64,7 @@ func setup(fs *flag.FlagSet, args []string) (*State, []string, bool) {
 	fs.Usage = usage
 	flags.ParseArgsInto(fs, args, flags.Client, "version")
 	if flags.Version {
-		fmt.Fprint(os.Stdout, version)
+		_, _ = fmt.Fprintln(os.Stdout, version)
 		os.Exit(2)
 	}
 	if len(fs.Args()) < 1 {
@@ -74,7 +72,7 @@ func setup(fs *flag.FlagSet, args []string) (*State, []string, bool) {
 	}
 	state := newState(strings.ToLower(fs.Arg(0)))
 	state.init()
-
+	
 	return state, fs.Args(), true
 }
 
@@ -90,36 +88,36 @@ func help(args ...string) {
 		}
 	}
 	if cmd == "" {
-		fmt.Fprintln(os.Stderr, intro)
+		_, _ = fmt.Fprintln(os.Stderr, intro)
 	} else {
 		// Simplest solution is re-execing.
 		command := exec.Command("gm", cmd, "-help")
 		command.Stdout = os.Stdout
 		command.Stderr = os.Stderr
-		command.Run()
+		_ = command.Run()
 	}
 	os.Exit(2)
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage of gm:\n")
-	fmt.Fprintf(os.Stderr, "\tgm [globalflags] <command> [flags]\n")
+	_, _ = fmt.Fprintf(os.Stderr, "Usage of gm:\n")
+	_, _ = fmt.Fprintf(os.Stderr, "\tgm [globalflags] <command> [flags]\n")
 	printCommands()
-	fmt.Fprintf(os.Stderr, "Global flags:\n")
+	_, _ = fmt.Fprintf(os.Stderr, "Global flags:\n")
 	flag.PrintDefaults()
 }
 
 // printCommands shows the available commands, including those installed
 // as separate binaries called "upspin-foo".
 func printCommands() {
-	fmt.Fprintf(os.Stderr, "gm commands:\n")
+	_, _ = fmt.Fprintf(os.Stderr, "gm commands:\n")
 	var cmdStrs []string
 	for cmd := range commands {
 		cmdStrs = append(cmdStrs, cmd)
 	}
-
+	
 	// Display "shell" first as it's not in "commands".
-	fmt.Fprintf(os.Stderr, "\tshell (Interactive mode)\n")
+	_, _ = fmt.Fprintf(os.Stderr, "\tshell (Interactive mode)\n")
 	sort.Strings(cmdStrs)
 	// There may be dups; filter them.
 	prev := ""
@@ -128,7 +126,7 @@ func printCommands() {
 			continue
 		}
 		prev = cmd
-		fmt.Fprintf(os.Stderr, "\t%s\n", cmd)
+		_, _ = fmt.Fprintf(os.Stderr, "\t%s\n", cmd)
 	}
 }
 
@@ -145,16 +143,16 @@ func newState(name string) *State {
 // usually including setting up a Config.
 func (s *State) init() {
 	// open the git manager config
-	err := s.gmc.Open(configPath)
+	err := s.gmc.Open("")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		_, _ = fmt.Fprintln(os.Stderr, err)
 		s.gmc.Close()
 		return
 	}
-
+	
 	data, err := ioutil.ReadAll(s.gmc.File())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "\tError reading config file: %v", err)
+		_, _ = fmt.Fprintf(os.Stderr, "\tError reading config file: %v", err)
 		return
 	}
 	s.configFile = data
@@ -211,4 +209,11 @@ func (s *State) writeOut(file string, data []byte) {
 		}
 		return
 	}
+}
+
+// usageAndExit prints usage message from provided FlagSet,
+// and exits the program with status code 2.
+func usageAndExit(fs *flag.FlagSet) {
+	fs.Usage()
+	os.Exit(2)
 }

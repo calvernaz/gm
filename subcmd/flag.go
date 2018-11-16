@@ -11,7 +11,7 @@ import (
 func (s *State) ParseFlags(fs *flag.FlagSet, args []string, help, usage string) {
 	helpFlag := fs.Bool("help", false, "print more information about the command")
 	usageFn := func() {
-		fmt.Fprintf(s.Stderr, "Usage: upspin %s\n", usage)
+		_, _ = fmt.Fprintf(s.Stderr, "Usage: upspin %s\n", usage)
 		if *helpFlag {
 			fmt.Fprintln(s.Stderr, help)
 		}
@@ -19,7 +19,7 @@ func (s *State) ParseFlags(fs *flag.FlagSet, args []string, help, usage string) 
 		n := 0
 		fs.VisitAll(func(*flag.Flag) { n++ })
 		if n > 0 {
-			fmt.Fprintf(s.Stderr, "Flags:\n")
+			_, _ = fmt.Fprintf(s.Stderr, "Flags:\n")
 			fs.PrintDefaults()
 		}
 		if s.Interactive {
