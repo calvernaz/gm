@@ -13,6 +13,10 @@ var (
 	configPath = filepath.Join("gm", "gm.json")
 )
 
+type GitManagerFile struct {
+	Repositories []Repository `json:"repositories"`
+}
+
 type GitManagerConfig struct {
 	Version string
 	
@@ -23,25 +27,29 @@ type GitManagerConfig struct {
 // Open creates the config file if it doesn't exist, opens it otherwise.
 // It returns an error in case it can create or open the file, the caller is
 // responsible for close the file.
-func (gmc *GitManagerConfig) Open(path string) error {
+func (gmc *GitManagerConfig) Open(path string) (err error) {
 	if path == "" {
 		path = configPath
 	}
 	
-	f, err := xdgdir.Config.Open(path)
+	var file *os.File
+	file, err = xdgdir.Config.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			if file, err := xdgdir.Config.Create(path); err == nil {
-				gmc.file = file
-				gmc.path = path
-				return nil
+			file, err = xdgdir.Config.Create(path)
+			if err != nil {
+				return errors.New("failed to create config file")
 			}
-			return errors.New("failed to create config file")
 		}
-		return err
+		
+		if err != nil {
+			return errors.New("failed to open the config file")
+		}
 	}
-	gmc.file = f
-	gmc.path = path
+	
+	gmc.file = file
+	gmc.path = file.Name()
+	
 	return err
 }
 
@@ -56,4 +64,8 @@ func (gmc *GitManagerConfig) Close() {
 }
 func (gmc *GitManagerConfig) File() *os.File {
 	return gmc.file
+}
+
+func (gmc *GitManagerConfig) Path() string {
+	return gmc.path
 }

@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"github.com/calvernaz/gm/gm"
 	"github.com/calvernaz/gm/subcmd"
+	"github.com/pkg/errors"
+	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -47,8 +49,8 @@ type copyState struct {
 
 func (s *State) copyCommand(cs *copyState, repositories []gm.Repository) {
 
-	if len(repositories) != 1 {
-		s.Exitf("copying multiple files but %s is not a directory", dstFile.path)
+	if len(repositories) < 1 {
+		s.Exit(errors.New("no repositories to add"))
 		usageAndExit(cs.flagSet)
 	}
 	
@@ -58,13 +60,49 @@ func (s *State) copyCommand(cs *copyState, repositories []gm.Repository) {
 // copyToDir copies the source files to the destination directory.
 // It recurs if -R is set and a source is a subdirectory.
 func (s *State) copyToDir(cs *copyState, src []gm.Repository) {
-	for _, from := range src {
+	f := s.gmc.File()
+	fi, err := f.Stat()
+	if err != nil {
+		s.Exitf("failed to obtain file info")
+		usageAndExit(cs.flagSet)
+	}
 	
+	repos := gm.GitManagerFile{}
+	if fi.Size() <= 0 {
+		repos.Repositories = append(repos.Repositories, src...)
+		b, err := json.Marshal(repos)
+		if err == nil {
+			err = ioutil.WriteFile(s.gmc.Path(), b, 0644)
+			if err != nil {
+				s.Exitf("failed to add repository: %v", err)
+			}
+			return
+		}
+		s.Exitf("failed to marshal repositories: %v", err)
+	}
+	
+	content, err := ioutil.ReadFile(s.gmc.Path())
+	if err != nil {
+		s.Exitf("failed reading the configuration file: %v", err)
+	}
+	
+	err = json.Unmarshal(content, &repos)
+	if err != nil {
+		s.Exitf("failed to read repositories", err)
+	}
+	
+	repos.Repositories = append(repos.Repositories, src...)
+	b, err := json.Marshal(repos)
+	if err == nil {
+		err = ioutil.WriteFile(s.gmc.Path(), b, 0644)
+	}
+	
+	if err != nil {
+		s.Exitf("failed writing repositories: %v", err)
 	}
 }
 
-// isDir reports whether the file is a directory either in Upspin
-// or in the local file system.
+// isDir reports whether the file is in the local file system.
 func (s *State) isDir(cf gm.Repository) bool {
 	info, err := os.Stat(cf.Path)
 	return err == nil && info.IsDir()
@@ -90,7 +128,6 @@ func (cs *copyState) glob(pattern string) (files []gm.Repository) {
 			})
 		}
 		return files
-		
 	}
 	
 	// Extra check to catch use of relative path on local machine.

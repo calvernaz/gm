@@ -97,11 +97,6 @@ func (lb logBridge) Write(b []byte) (n int, err error) {
 	return len(b), nil
 }
 
-// NewStdLogger creates a *log.Logger ("log" is from the Go standard library)
-// that forwards messages to the provided upspin logger using a logBridge. The
-// standard logger is configured with log.Lshortfile, this log line
-// format which is parsed to extract the log message (skipping the filename,
-// line number) to forward it to the provided upspin logger.
 func NewStdLogger(l Logger) *log.Logger {
 	lb := logBridge{l}
 	return log.New(lb, "", log.Lshortfile)

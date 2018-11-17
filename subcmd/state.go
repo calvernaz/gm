@@ -46,7 +46,7 @@ func (s *State) DefaultIO() {
 // We don't use log (although the packages we call do) because the errors
 // are for regular people.
 func (s *State) Exitf(format string, args ...interface{}) {
-	format = fmt.Sprintf("upspin: %s: %s\n", s.Name, format)
+	format = fmt.Sprintf("gm: %s: %s\n", s.Name, format)
 	fmt.Fprintf(s.Stderr, format, args...)
 	if s.Interactive {
 		panic("exit")

@@ -34,7 +34,7 @@ var (
 type State struct {
 	*subcmd.State
 	configFile []byte // The contents of the config file we loaded.
-	gmc        gm.GitManagerConfig
+	gmc        *gm.GitManagerConfig
 }
 
 func main() {
@@ -46,15 +46,12 @@ func main() {
 		help(args[1:]...)
 	}
 	
-	gmc := gm.GitManagerConfig{Version: version}
 	
-	state.gmc = gmc
 	state.run(args)
-	
 	state.ExitNow()
 }
 
-// setup initializes the upspin command given the full command-line argument
+// setup initializes the gm command given the full command-line argument
 // list, args. It applies any global flags set on the command line and returns
 // the initialized State and the arg list after the global flags, starting with
 // the subcommand ("ls", "info", etc.) that will be run.
@@ -71,6 +68,7 @@ func setup(fs *flag.FlagSet, args []string) (*State, []string, bool) {
 		return nil, nil, false
 	}
 	state := newState(strings.ToLower(fs.Arg(0)))
+	state.gmc = &gm.GitManagerConfig{Version: version}
 	state.init()
 	
 	return state, fs.Args(), true
@@ -107,8 +105,7 @@ func usage() {
 	flag.PrintDefaults()
 }
 
-// printCommands shows the available commands, including those installed
-// as separate binaries called "upspin-foo".
+// printCommands shows the available commands
 func printCommands() {
 	_, _ = fmt.Fprintf(os.Stderr, "gm commands:\n")
 	var cmdStrs []string
@@ -159,11 +156,6 @@ func (s *State) init() {
 }
 
 // getCommand looks up the command named by op.
-// If it's in the commands tables, we're done.
-// If not, it looks for a binary with the equivalent name
-// (upspin foo is implemented by upspin-foo).
-// If the command still can't be found, it exits after listing the
-// commands that do exist.
 func (s *State) getCommand(op string) func(*State, ...string) {
 	op = strings.ToLower(op)
 	fn := commands[op]

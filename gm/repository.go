@@ -1,7 +1,6 @@
 package gm
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -15,14 +14,4 @@ type Repository struct {
 	LastUpdate time.Time `json:"last_update"`
 	// Git Repository path
 	Path string
-}
-
-// UnmarshalJSON is needed because Parsed has unexported fields.
-func (r *Repository) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, &r)
-}
-
-// MarshalJSON is needed because Parsed has unexported fields.
-func (r *Repository) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&r)
 }

@@ -11,9 +11,9 @@ import (
 func (s *State) ParseFlags(fs *flag.FlagSet, args []string, help, usage string) {
 	helpFlag := fs.Bool("help", false, "print more information about the command")
 	usageFn := func() {
-		_, _ = fmt.Fprintf(s.Stderr, "Usage: upspin %s\n", usage)
+		_, _ = fmt.Fprintf(s.Stderr, "Usage: gm %s\n", usage)
 		if *helpFlag {
-			fmt.Fprintln(s.Stderr, help)
+			_, _ = fmt.Fprintln(s.Stderr, help)
 		}
 		// How many flags?
 		n := 0
