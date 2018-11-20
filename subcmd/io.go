@@ -54,6 +54,7 @@ func homeDir(who string) string {
 			if err != nil {
 				return "~" // What else can we do?
 			}
+			return home
 		}
 	}
 	u, err := userLookup(who)

@@ -28,6 +28,7 @@ var (
 	commands = map[string]func(*State, ...string){
 		"config": (*State).config,
 		"add":    (*State).add,
+		"update": (*State).update,
 	}
 )
 
@@ -45,7 +46,6 @@ func main() {
 	if args[0] == "help" {
 		help(args[1:]...)
 	}
-	
 	
 	state.run(args)
 	state.ExitNow()
