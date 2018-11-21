@@ -35,6 +35,7 @@ var (
 type State struct {
 	*subcmd.State
 	configFile []byte // The contents of the config file we loaded.
+
 	gmc        *gm.GitManagerConfig
 }
 
@@ -46,7 +47,8 @@ func main() {
 	if args[0] == "help" {
 		help(args[1:]...)
 	}
-	
+
+	state.gmc.Loop()
 	state.run(args)
 	state.ExitNow()
 }

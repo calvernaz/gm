@@ -22,6 +22,8 @@ type GitManagerConfig struct {
 	
 	path string
 	file *os.File
+
+	ch chan <-Operation
 }
 
 // Open creates the config file if it doesn't exist, opens it otherwise.
@@ -61,6 +63,8 @@ func (gmc *GitManagerConfig) Close() {
 			log.Error(err)
 		}
 	}
+
+	close(gmc.ch)
 }
 func (gmc *GitManagerConfig) File() *os.File {
 	return gmc.file

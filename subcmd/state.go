@@ -62,5 +62,4 @@ func (s *State) Exit(err error) {
 
 // ExitNow terminates the process with the current ExitCode.
 func (s *State) ExitNow() {
-
 }
