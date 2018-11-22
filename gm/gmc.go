@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
+	"sync"
 	
 	"github.com/opentracing/opentracing-go/log"
 	"go4.org/xdgdir"
@@ -23,7 +24,8 @@ type GitManagerConfig struct {
 	path string
 	file *os.File
 
-	ch chan <-Operation
+	ch chan Operation
+	wg sync.WaitGroup
 }
 
 // Open creates the config file if it doesn't exist, opens it otherwise.
@@ -72,4 +74,28 @@ func (gmc *GitManagerConfig) File() *os.File {
 
 func (gmc *GitManagerConfig) Path() string {
 	return gmc.path
+}
+
+func (gmc *GitManagerConfig) Loop() {
+	gmc.ch = make(chan Operation, 2)
+	for {
+		select {
+		case op, ok := <-gmc.ch:
+			if !ok {
+				return
+			}
+			_ = op.Execute()
+			gmc.wg.Done()
+		}
+	}
+}
+
+
+func (gmc *GitManagerConfig) Run(operation Operation) {
+	gmc.wg.Add(1)
+	gmc.ch <- operation
+}
+
+func (gmc *GitManagerConfig) Wait() {
+	gmc.wg.Wait()
 }

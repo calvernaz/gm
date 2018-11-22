@@ -48,8 +48,10 @@ func main() {
 		help(args[1:]...)
 	}
 
-	state.gmc.Loop()
+	go state.gmc.Loop()
+	
 	state.run(args)
+	state.gmc.Wait()
 	state.ExitNow()
 }
 

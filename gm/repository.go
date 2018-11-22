@@ -1,11 +1,11 @@
 package gm
 
 import (
-	"time"
-	"github.com/calvernaz/gm/subcmd"
 	"fmt"
-	"os"
+	"github.com/calvernaz/gm/subcmd"
 	"gopkg.in/src-d/go-git.v4"
+	"os"
+	"time"
 )
 
 // Repository format entry
@@ -20,17 +20,35 @@ type Repository struct {
 	Path string
 }
 
-func (r Repository) Update() {
-	r, err := git.PlainOpen(subcmd.Tilde(r.Path))
-	CheckIfError(err)
-	w, err := r.Worktree()
-	CheckIfError(err)
+func (r Repository) Update() error {
+	Info("updating repository %v", r.Path)
+	gitRepository, err := git.PlainOpen(subcmd.Tilde(r.Path))
+	if err != nil {
+		return err
+	}
+	//CheckIfError(err)
+	w, err := gitRepository.Worktree()
+	if err != nil {
+		return err
+	}
+	//CheckIfError(err)
 	err = w.Pull(&git.PullOptions{RemoteName: "origin"})
-	ref, err := r.Head()
-	commit, err := r.CommitObject(ref.Hash())
-	CheckIfError(err)
-
+	if err != nil {
+		return err
+	}
+	
+	ref, err := gitRepository.Head()
+	if err != nil {
+		return err
+	}
+	
+	commit, err := gitRepository.CommitObject(ref.Hash())
+	if err != nil {
+		return err
+	}
+	// CheckIfError(err)
 	fmt.Println(commit)
+	return nil
 }
 
 // CheckIfError should be used to naively panics if an error is not nil.

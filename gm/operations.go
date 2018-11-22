@@ -7,27 +7,15 @@ const (
 )
 
 type Operation struct {
-	repo Repository
-	opType OperationType
+	Repo Repository
+	OpType OperationType
 }
 
-func (op Operation) Execute() {
-	switch op.opType {
+func (op Operation) Execute() error {
+	switch op.OpType {
 	case Update:
-		op.repo.Update()
+		return op.Repo.Update()
 	}
+	return nil
 }
 
-func (gmc *GitManagerConfig) Loop() {
-	gmc.ch = make(chan Operation, 2)
-
-	for {
-		select {
-			case op, ok := <-gmc.ch:
-			if !ok {
-				return
-			}
-			op.Execute()
-		}
-	}
-}
