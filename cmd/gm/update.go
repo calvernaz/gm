@@ -21,11 +21,9 @@ func (s *State) update(args ...string) {
 	}
 	
 	for _, repo := range repos.Repositories {
-//		go func(r gm.Repository) {
-			s.gmc.Run(gm.Operation{
-				Repo:   repo,
-				OpType: gm.Update,
-			})
-//		}(repo)
+		s.gmc.Run(gm.Operation{
+			Repo:   repo,
+			OpType: gm.Update,
+		})
 	}
 }

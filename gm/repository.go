@@ -6,6 +6,7 @@ import (
 	"gopkg.in/src-d/go-git.v4"
 	"os"
 	"time"
+	"path"
 )
 
 // Repository format entry
@@ -21,7 +22,7 @@ type Repository struct {
 }
 
 func (r Repository) Update() error {
-	Info("updating repository %v", r.Path)
+	Info("updating repository %v", path.Base(r.Path))
 	gitRepository, err := git.PlainOpen(subcmd.Tilde(r.Path))
 	if err != nil {
 		return err
@@ -31,6 +32,8 @@ func (r Repository) Update() error {
 	if err != nil {
 		return err
 	}
+
+	w.Clean()
 	//CheckIfError(err)
 	err = w.Pull(&git.PullOptions{RemoteName: "origin"})
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"path"
 )
 
 func (s *State) add(args ...string) {
@@ -30,7 +31,7 @@ func (s *State) add(args ...string) {
 		recur:     *recur,
 		verbose:   *verbose,
 	}
-	
+
 	var repositories []gm.Repository
 	for _, repo := range fs.Args() {
 		repositories = append(repositories, cs.glob(repo)...)
@@ -76,6 +77,10 @@ func (s *State) copyToDir(cs *copyState, src []gm.Repository) {
 			if err != nil {
 				s.Exitf("failed to add repository: %v", err)
 			}
+
+			if cs.verbose {
+				printRepositories(repos.Repositories)
+			}
 			return
 		}
 		s.Exitf("failed to marshal repositories: %v", err)
@@ -85,7 +90,8 @@ func (s *State) copyToDir(cs *copyState, src []gm.Repository) {
 	if err != nil {
 		s.Exitf("failed reading the configuration file: %v", err)
 	}
-	
+
+
 	err = json.Unmarshal(content, &repos)
 	if err != nil {
 		s.Exitf("failed to read repositories", err)
@@ -95,6 +101,11 @@ func (s *State) copyToDir(cs *copyState, src []gm.Repository) {
 	b, err := json.Marshal(repos)
 	if err == nil {
 		err = ioutil.WriteFile(s.gmc.Path(), b, 0644)
+		if err == nil {
+			if cs.verbose {
+				printRepositories(repos.Repositories)
+			}
+		}
 	}
 	
 	if err != nil {
@@ -154,4 +165,10 @@ func isLocal(file string) bool {
 		return true
 	}
 	return false
+}
+
+func printRepositories(repos []gm.Repository) {
+	for _, repo := range repos {
+		gm.Info("repository added: %s", path.Base(repo.Path))
+	}
 }
