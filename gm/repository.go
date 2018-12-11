@@ -32,8 +32,7 @@ func (r Repository) Update() error {
 	if err != nil {
 		return err
 	}
-
-	w.Clean()
+	
 	//CheckIfError(err)
 	err = w.Pull(&git.PullOptions{RemoteName: "origin"})
 	if err != nil {

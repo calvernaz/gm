@@ -130,12 +130,12 @@ func (cs *copyState) glob(pattern string) (files []gm.Repository) {
 	
 	// Path on local machine?
 	if isLocal(pattern) {
-		for _, path := range cs.state.GlobLocal(subcmd.Tilde(pattern)) {
+		for _, repoPath := range cs.state.GlobLocal(subcmd.Tilde(pattern)) {
 			files = append(files, gm.Repository{
-				Name:       "",
-				Enabled:    false,
-				LastUpdate: time.Time{},
-				Path: path,
+				Name:       path.Base(repoPath),
+				Enabled:    true,
+				LastUpdate: time.Now(),
+				Path: repoPath,
 			})
 		}
 		return files

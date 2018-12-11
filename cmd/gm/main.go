@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -207,6 +208,26 @@ func (s *State) writeOut(file string, data []byte) {
 	}
 }
 
+func (s *State) writePrettyOut(file string, data []byte) {
+	if file == "" {
+		var dat map[string]interface{}
+		if err := json.Unmarshal(data, &dat); err != nil {
+			s.Exitf("failed to output: %v", err)
+		}
+		
+		b, err := json.MarshalIndent(dat, "", "  ")
+		if err != nil {
+			s.Exitf("failed to output: %v", err)
+		}
+		
+		_, err = s.Stdout.Write(b)
+		if err != nil {
+			s.Exitf("copying to output failed: %v", err)
+		}
+		
+		return
+	}
+}
 // usageAndExit prints usage message from provided FlagSet,
 // and exits the program with status code 2.
 func usageAndExit(fs *flag.FlagSet) {
