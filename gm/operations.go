@@ -2,8 +2,13 @@ package gm
 
 type OperationType int
 
+// operation type
 const (
 	Update OperationType = iota + 1
+)
+
+const (
+	Success bool = true
 )
 
 type Operation struct {
@@ -11,11 +16,12 @@ type Operation struct {
 	OpType OperationType
 }
 
-func (op Operation) Execute() error {
+func (op Operation) Execute() {
 	switch op.OpType {
 	case Update:
-		return op.Repo.Update()
+		if err := op.Repo.Update(); err != nil {
+		
+		}
 	}
-	return nil
 }
 

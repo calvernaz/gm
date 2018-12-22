@@ -15,18 +15,18 @@ import (
 type vcsCmd struct {
 	name string
 	cmd  string // name of binary to invoke command
-
+	
 	createCmd   []string // commands to download a fresh copy of a repository
 	downloadCmd []string // commands to download updates into an existing repository
-
+	
 	tagCmd         []tagCmd // commands to list tags
 	tagLookupCmd   []tagCmd // commands to lookup tags before running tagSyncCmd
 	tagSyncCmd     []string // commands to sync to specific tag
 	tagSyncDefault []string // commands to sync to default tag
-
+	
 	scheme  []string
 	pingCmd string
-
+	
 	remoteRepo  func(v *vcsCmd, rootDir string) (remoteRepo string, err error)
 	resolveRepo func(v *vcsCmd, rootDir, remoteRepo string) (realRepo string, err error)
 }
@@ -75,10 +75,7 @@ type tagCmd struct {
 
 // vcsList lists the known version control systems
 var vcsList = []*vcsCmd{
-	vcsHg,
 	vcsGit,
-	vcsSvn,
-	vcsBzr,
 }
 
 // vcsByCmd returns the version control system for the given
@@ -96,10 +93,10 @@ func vcsByCmd(cmd string) *vcsCmd {
 var vcsGit = &vcsCmd{
 	name: "Git",
 	cmd:  "git",
-
+	
 	createCmd:   []string{"clone {repo} {dir}", "-go-internal-cd {dir} submodule update --init --recursive"},
 	downloadCmd: []string{"pull --ff-only", "submodule update --init --recursive"},
-
+	
 	tagCmd: []tagCmd{
 		// tags/xxx matches a git tag named xxx
 		// origin/xxx matches a git branch named xxx on the default remote repository
@@ -115,7 +112,7 @@ var vcsGit = &vcsCmd{
 	// DO NOT add 'checkout master' here.
 	// See golang.org/issue/9032.
 	tagSyncDefault: []string{"submodule update --init --recursive"},
-
+	
 	scheme:     []string{"git", "https", "http", "git+ssh", "ssh"},
 	pingCmd:    "ls-remote {scheme}://{repo}",
 	remoteRepo: gitRemoteRepo,
@@ -139,7 +136,7 @@ func gitRemoteRepo(vcsGit *vcsCmd, rootDir string) (remoteRepo string, err error
 		return "", err
 	}
 	out := strings.TrimSpace(string(outb))
-
+	
 	var repoURL *url.URL
 	if m := scpSyntaxRe.FindStringSubmatch(out); m != nil {
 		// Match SCP-like syntax and convert it to a URL.
@@ -157,7 +154,7 @@ func gitRemoteRepo(vcsGit *vcsCmd, rootDir string) (remoteRepo string, err error
 			return "", err
 		}
 	}
-
+	
 	// Iterate over insecure schemes too, because this function simply
 	// reports the state of the repo. If we can't see insecure schemes then
 	// we can't report the actual repo URL.
@@ -205,24 +202,24 @@ func (v *vcsCmd) run1(dir string, cmdline string, keyval []string, verbose bool)
 	for i, arg := range args {
 		args[i] = expand(m, arg)
 	}
-
+	
 	_, err := exec.LookPath(v.cmd)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "missing %s command.", v.name)
+		_, _ = fmt.Fprintf(os.Stderr, "missing %s command.", v.name)
 		return nil, err
 	}
-
+	
 	cmd := exec.Command(v.cmd, args...)
 	cmd.Dir = dir
-
+	
 	out, err := cmd.Output()
 	if err != nil {
-		if verbose || cfg.BuildV {
-			fmt.Fprintf(os.Stderr, "# cd %s; %s %s\n", dir, v.cmd, strings.Join(args, " "))
+		if verbose {
+			_, _ = fmt.Fprintf(os.Stderr, "# cd %s; %s %s\n", dir, v.cmd, strings.Join(args, " "))
 			if ee, ok := err.(*exec.ExitError); ok && len(ee.Stderr) > 0 {
-				os.Stderr.Write(ee.Stderr)
+				_, _ = os.Stderr.Write(ee.Stderr)
 			} else {
-				fmt.Fprintf(os.Stderr, err.Error())
+				_, _ = fmt.Fprintf(os.Stderr, err.Error())
 			}
 		}
 	}
@@ -246,7 +243,7 @@ func (v *vcsCmd) create(dir, repo string) error {
 }
 
 // download downloads any new changes for the repo in dir.
-func (v *vcsCmd) download(dir string) error {
+func (v *vcsCmd) Download(dir string) error {
 	for _, cmd := range v.downloadCmd {
 		if err := v.run(dir, cmd); err != nil {
 			return err
@@ -291,7 +288,7 @@ func (v *vcsCmd) tagSync(dir, tag string) error {
 			}
 		}
 	}
-
+	
 	if tag == "" && v.tagSyncDefault != nil {
 		for _, cmd := range v.tagSyncDefault {
 			if err := v.run(dir, cmd); err != nil {
@@ -300,7 +297,7 @@ func (v *vcsCmd) tagSync(dir, tag string) error {
 		}
 		return nil
 	}
-
+	
 	for _, cmd := range v.tagSyncCmd {
 		if err := v.run(dir, cmd, "tag", tag); err != nil {
 			return err
@@ -313,53 +310,39 @@ func (v *vcsCmd) tagSync(dir, tag string) error {
 // version control system and code repository to use.
 // On return, root is the import path
 // corresponding to the root of the repository.
-func vcsFromDir(dir, srcRoot string) (vcs *vcsCmd, root string, err error) {
+func VcsFromDir(dir string) (vcs *vcsCmd, err error) {
 	// Clean and double-check that dir is in (a subdirectory of) srcRoot.
 	dir = filepath.Clean(dir)
-	srcRoot = filepath.Clean(srcRoot)
-	if len(dir) <= len(srcRoot) || dir[len(srcRoot)] != filepath.Separator {
-		return nil, "", fmt.Errorf("directory %q is outside source root %q", dir, srcRoot)
-	}
-
 	var vcsRet *vcsCmd
 	var rootRet string
-
+	
 	origDir := dir
-	for len(dir) > len(srcRoot) {
-		for _, vcs := range vcsList {
-			if _, err := os.Stat(filepath.Join(dir, "."+vcs.cmd)); err == nil {
-				root := filepath.ToSlash(dir[len(srcRoot)+1:])
-				// Record first VCS we find, but keep looking,
-				// to detect mistakes like one kind of VCS inside another.
-				if vcsRet == nil {
-					vcsRet = vcs
-					rootRet = root
-					continue
-				}
-				// Allow .git inside .git, which can arise due to submodules.
-				if vcsRet == vcs && vcs.cmd == "git" {
-					continue
-				}
-				// Otherwise, we have one VCS inside a different VCS.
-				return nil, "", fmt.Errorf("directory %q uses %s, but parent %q uses %s",
-					filepath.Join(srcRoot, rootRet), vcsRet.cmd, filepath.Join(srcRoot, root), vcs.cmd)
+	
+	for _, vcs := range vcsList {
+		if _, err := os.Stat(filepath.Join(dir, "."+vcs.cmd)); err == nil {
+			root := filepath.ToSlash(dir)
+			// Record first VCS we find, but keep looking,
+			// to detect mistakes like one kind of VCS inside another.
+			if vcsRet == nil {
+				vcsRet = vcs
+				rootRet = root
+				continue
 			}
+			// Allow .git inside .git, which can arise due to submodules.
+			if vcsRet == vcs && vcs.cmd == "git" {
+				continue
+			}
+			// Otherwise, we have one VCS inside a different VCS.
+			return nil, fmt.Errorf("directory %q uses %s, but parent %q uses %s",
+				filepath.Join(dir, rootRet), vcsRet.cmd, filepath.Join(dir, root), vcs.cmd)
 		}
-
-		// Move to parent.
-		ndir := filepath.Dir(dir)
-		if len(ndir) >= len(dir) {
-			// Shouldn't happen, but just in case, stop.
-			break
-		}
-		dir = ndir
 	}
-
+	
 	if vcsRet != nil {
-		return vcsRet, rootRet, nil
+		return vcsRet, nil
 	}
-
-	return nil, "", fmt.Errorf("directory %q is not using a known version control system", origDir)
+	
+	return nil, fmt.Errorf("directory %q is not using a known version control system", origDir)
 }
 
 // RepoRoot describes the repository root for a tree of source code.
@@ -368,7 +351,7 @@ type RepoRoot struct {
 	Root     string // import path corresponding to root of repo
 	IsCustom bool   // defined by served <meta> tags (as opposed to hard-coded pattern)
 	VCS      string // vcs type ("mod", "git", ...)
-
+	
 	vcs *vcsCmd // internal: vcs command access
 }
 
@@ -399,96 +382,6 @@ func expand(match map[string]string, s string) string {
 	return strings.NewReplacer(oldNew...).Replace(s)
 }
 
-// vcsPaths defines the meaning of import paths referring to
-// commonly-used VCS hosting sites (github.com/user/dir)
-// and import paths referring to a fully-qualified importPath
-// containing a VCS type (foo.com/repo.git/dir)
-var vcsPaths = []*vcsPath{
-	// Github
-	{
-		prefix: "github.com/",
-		re:     `^(?P<root>github\.com/[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+)(/[\p{L}0-9_.\-]+)*$`,
-		vcs:    "git",
-		repo:   "https://{root}",
-		check:  noVCSSuffix,
-	},
-
-	// Bitbucket
-	{
-		prefix: "bitbucket.org/",
-		re:     `^(?P<root>bitbucket\.org/(?P<bitname>[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+))(/[A-Za-z0-9_.\-]+)*$`,
-		repo:   "https://{root}",
-		check:  bitbucketVCS,
-	},
-
-	// IBM DevOps Services (JazzHub)
-	{
-		prefix: "hub.jazz.net/git/",
-		re:     `^(?P<root>hub\.jazz\.net/git/[a-z0-9]+/[A-Za-z0-9_.\-]+)(/[A-Za-z0-9_.\-]+)*$`,
-		vcs:    "git",
-		repo:   "https://{root}",
-		check:  noVCSSuffix,
-	},
-
-	// Git at Apache
-	{
-		prefix: "git.apache.org/",
-		re:     `^(?P<root>git\.apache\.org/[a-z0-9_.\-]+\.git)(/[A-Za-z0-9_.\-]+)*$`,
-		vcs:    "git",
-		repo:   "https://{root}",
-	},
-
-	// Git at OpenStack
-	{
-		prefix: "git.openstack.org/",
-		re:     `^(?P<root>git\.openstack\.org/[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+)(\.git)?(/[A-Za-z0-9_.\-]+)*$`,
-		vcs:    "git",
-		repo:   "https://{root}",
-	},
-
-	// chiselapp.com for fossil
-	{
-		prefix: "chiselapp.com/",
-		re:     `^(?P<root>chiselapp\.com/user/[A-Za-z0-9]+/repository/[A-Za-z0-9_.\-]+)$`,
-		vcs:    "fossil",
-		repo:   "https://{root}",
-	},
-
-	// General syntax for any server.
-	// Must be last.
-	{
-		re:   `^(?P<root>(?P<repo>([a-z0-9.\-]+\.)+[a-z0-9.\-]+(:[0-9]+)?(/~?[A-Za-z0-9_.\-]+)+?)\.(?P<vcs>bzr|fossil|git|hg|svn))(/~?[A-Za-z0-9_.\-]+)*$`,
-		ping: true,
-	},
-}
-
-// vcsPathsAfterDynamic gives additional vcsPaths entries
-// to try after the dynamic HTML check.
-// This gives those sites a chance to introduce <meta> tags
-// as part of a graceful transition away from the hard-coded logic.
-var vcsPathsAfterDynamic = []*vcsPath{
-	// Launchpad. See golang.org/issue/11436.
-	{
-		prefix: "launchpad.net/",
-		re:     `^(?P<root>launchpad\.net/((?P<project>[A-Za-z0-9_.\-]+)(?P<series>/[A-Za-z0-9_.\-]+)?|~[A-Za-z0-9_.\-]+/(\+junk|[A-Za-z0-9_.\-]+)/[A-Za-z0-9_.\-]+))(/[A-Za-z0-9_.\-]+)*$`,
-		vcs:    "bzr",
-		repo:   "https://{root}",
-		check:  launchpadVCS,
-	},
-}
-
-func init() {
-	// fill in cached regexps.
-	// Doing this eagerly discovers invalid regexp syntax
-	// without having to run a command that needs that regexp.
-	for _, srv := range vcsPaths {
-		srv.regexp = regexp.MustCompile(srv.re)
-	}
-	for _, srv := range vcsPathsAfterDynamic {
-		srv.regexp = regexp.MustCompile(srv.re)
-	}
-}
-
 // noVCSSuffix checks that the repository name does not
 // end in .foo for any version control system foo.
 // The usual culprit is ".git".
@@ -508,14 +401,14 @@ func bitbucketVCS(match map[string]string) error {
 	if err := noVCSSuffix(match); err != nil {
 		return err
 	}
-
+	
 	var resp struct {
 		SCM string `json:"scm"`
 	}
 	url := expand(match, "https://api.bitbucket.org/2.0/repositories/{bitname}?fields=scm")
-	data, err := web.Get(url)
+	data, err := Get(url)
 	if err != nil {
-		if httpErr, ok := err.(*web.HTTPError); ok && httpErr.StatusCode == 403 {
+		if httpErr, ok := err.(*HTTPError); ok && httpErr.StatusCode == 403 {
 			// this may be a private repository. If so, attempt to determine which
 			// VCS it uses. See issue 5375.
 			root := match["root"]
@@ -526,7 +419,7 @@ func bitbucketVCS(match map[string]string) error {
 				}
 			}
 		}
-
+		
 		if resp.SCM == "" {
 			return err
 		}
@@ -535,7 +428,7 @@ func bitbucketVCS(match map[string]string) error {
 			return fmt.Errorf("decoding %s: %v", url, err)
 		}
 	}
-
+	
 	if vcsByCmd(resp.SCM) != nil {
 		match["vcs"] = resp.SCM
 		if resp.SCM == "git" {
@@ -543,6 +436,6 @@ func bitbucketVCS(match map[string]string) error {
 		}
 		return nil
 	}
-
+	
 	return fmt.Errorf("unable to detect version control system for bitbucket.org/ path")
 }

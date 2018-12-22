@@ -10,6 +10,7 @@ import (
 // according to those set in the flag set.
 func (s *State) ParseFlags(fs *flag.FlagSet, args []string, help, usage string) {
 	helpFlag := fs.Bool("help", false, "print more information about the command")
+	
 	usageFn := func() {
 		_, _ = fmt.Fprintf(s.Stderr, "Usage: gm %s\n", usage)
 		if *helpFlag {
@@ -27,10 +28,12 @@ func (s *State) ParseFlags(fs *flag.FlagSet, args []string, help, usage string) 
 		}
 	}
 	fs.Usage = usageFn
+	
 	err := fs.Parse(args)
 	if err != nil {
 		s.Exit(err)
 	}
+	
 	if *helpFlag {
 		fs.Usage()
 		os.Exit(2)

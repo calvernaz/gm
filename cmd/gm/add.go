@@ -3,27 +3,30 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"github.com/calvernaz/gm/gm"
-	"github.com/calvernaz/gm/subcmd"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
-	"path"
+	
+	"github.com/calvernaz/gm/gm"
+	"github.com/calvernaz/gm/subcmd"
+	"github.com/calvernaz/gm/log"
+	"github.com/pkg/errors"
 )
 
 func (s *State) add(args ...string) {
-	const help = `
-`
+	const help = ``
 	
+	// commands
 	fs := flag.NewFlagSet("add", flag.ExitOnError)
 	verbose := fs.Bool("v", false, "log each repository as it is added")
 	recur := fs.Bool("R", false, "recursively add repositories")
 	overwrite := fs.Bool("overwrite", true, "overwrite existing repositories")
 	
-	s.ParseFlags(fs, args, help, "add repository...")
+	s.ParseFlags(fs, args, help, "add repository")
+	
 	cs := &copyState{
 		state:     s,
 		flagSet:   fs,
@@ -169,6 +172,6 @@ func isLocal(file string) bool {
 
 func printRepositories(repos []gm.Repository) {
 	for _, repo := range repos {
-		gm.Info("repository added: %s", path.Base(repo.Path))
+		log.Printf("repository added: %s", path.Base(repo.Path))
 	}
 }

@@ -84,7 +84,7 @@ func (gmc *GitManagerConfig) Loop() {
 			if !ok {
 				return
 			}
-			_ = op.Execute()
+			op.Execute()
 			gmc.wg.Done()
 		}
 	}

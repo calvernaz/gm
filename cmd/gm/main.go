@@ -49,10 +49,15 @@ func main() {
 		help(args[1:]...)
 	}
 
+	// loop accepting and running operations
 	go state.gmc.Loop()
 	
+	// run the command
 	state.run(args)
+	
+	// wait until operation  is done
 	state.gmc.Wait()
+	
 	state.ExitNow()
 }
 
@@ -103,16 +108,16 @@ func help(args ...string) {
 }
 
 func usage() {
-	_, _ = fmt.Fprintf(os.Stderr, "Usage of gm:\n")
-	_, _ = fmt.Fprintf(os.Stderr, "\tgm [globalflags] <command> [flags]\n")
+	_, _ = fmt.Fprintf(os.Stderr, "Usage:\n")
+	_, _ = fmt.Fprintf(os.Stderr, "\n\tgm [globalflags] <command> [flags]\n")
 	printCommands()
-	_, _ = fmt.Fprintf(os.Stderr, "Global flags:\n")
+	_, _ = fmt.Fprintf(os.Stderr, "\nGlobal flags:\n")
 	flag.PrintDefaults()
 }
 
 // printCommands shows the available commands
 func printCommands() {
-	_, _ = fmt.Fprintf(os.Stderr, "gm commands:\n")
+	_, _ = fmt.Fprintf(os.Stderr, "\nCommands:\n")
 	var cmdStrs []string
 	for cmd := range commands {
 		cmdStrs = append(cmdStrs, cmd)
