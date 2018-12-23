@@ -2,28 +2,35 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/calvernaz/gm/gm"
 	"io/ioutil"
+	
+	"github.com/calvernaz/gm/manager"
 )
 
 func (s *State) update(args ...string) {
 	const help = ``
 	
-	content, err := ioutil.ReadFile(s.gmc.Path())
+	// reads the manager file
+	content, err := ioutil.ReadFile(s.gmc.File().Name())
 	if err != nil {
-		s.Exitf("failed reading the configuration file: %v", err)
+		s.Exitf("failed reading the configuration mf: %v", err)
 	}
 	
-	repos := gm.GitManagerFile{}
-	err = json.Unmarshal(content, &repos)
+	// unmarshal json file
+	mf := manager.GitManagerFile{}
+	err = json.Unmarshal(content, &mf)
 	if err != nil {
 		s.Exitf("failed to read repositories", err)
 	}
 	
-	for _, repo := range repos.Repositories {
-		s.gmc.Run(gm.Operation{
-			Repo:   repo,
-			OpType: gm.Update,
-		})
+	// run update on all enabled repositories
+	for _, repo := range mf.Repositories {
+		if repo.Enabled {
+			op := manager.Operation{
+				Repo:   repo,
+				OpType: manager.Update,
+			}
+			s.gmc.Run(op)
+		}
 	}
 }

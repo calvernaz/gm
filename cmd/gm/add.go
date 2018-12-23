@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 	
-	"github.com/calvernaz/gm/gm"
-	"github.com/calvernaz/gm/subcmd"
 	"github.com/calvernaz/gm/log"
+	"github.com/calvernaz/gm/manager"
+	"github.com/calvernaz/gm/subcmd"
 	"github.com/pkg/errors"
 )
 
@@ -35,7 +35,7 @@ func (s *State) add(args ...string) {
 		verbose:   *verbose,
 	}
 
-	var repositories []gm.Repository
+	var repositories []manager.RepositoryEntry
 	for _, repo := range fs.Args() {
 		repositories = append(repositories, cs.glob(repo)...)
 	}
@@ -51,7 +51,7 @@ type copyState struct {
 	verbose   bool
 }
 
-func (s *State) copyCommand(cs *copyState, repositories []gm.Repository) {
+func (s *State) copyCommand(cs *copyState, repositories []manager.RepositoryEntry) {
 
 	if len(repositories) < 1 {
 		s.Exit(errors.New("no repositories to add"))
@@ -63,7 +63,7 @@ func (s *State) copyCommand(cs *copyState, repositories []gm.Repository) {
 
 // copyToDir copies the source files to the destination directory.
 // It recurs if -R is set and a source is a subdirectory.
-func (s *State) copyToDir(cs *copyState, src []gm.Repository) {
+func (s *State) copyToDir(cs *copyState, src []manager.RepositoryEntry) {
 	f := s.gmc.File()
 	fi, err := f.Stat()
 	if err != nil {
@@ -71,12 +71,12 @@ func (s *State) copyToDir(cs *copyState, src []gm.Repository) {
 		usageAndExit(cs.flagSet)
 	}
 	
-	repos := gm.GitManagerFile{}
+	repos := manager.GitManagerFile{}
 	if fi.Size() <= 0 {
 		repos.Repositories = append(repos.Repositories, src...)
 		b, err := json.Marshal(repos)
 		if err == nil {
-			err = ioutil.WriteFile(s.gmc.Path(), b, 0644)
+			err = ioutil.WriteFile(s.gmc.File().Name(), b, 0644)
 			if err != nil {
 				s.Exitf("failed to add repository: %v", err)
 			}
@@ -89,7 +89,7 @@ func (s *State) copyToDir(cs *copyState, src []gm.Repository) {
 		s.Exitf("failed to marshal repositories: %v", err)
 	}
 	
-	content, err := ioutil.ReadFile(s.gmc.Path())
+	content, err := ioutil.ReadFile(s.gmc.File().Name())
 	if err != nil {
 		s.Exitf("failed reading the configuration file: %v", err)
 	}
@@ -103,7 +103,7 @@ func (s *State) copyToDir(cs *copyState, src []gm.Repository) {
 	repos.Repositories = append(repos.Repositories, src...)
 	b, err := json.Marshal(repos)
 	if err == nil {
-		err = ioutil.WriteFile(s.gmc.Path(), b, 0644)
+		err = ioutil.WriteFile(s.gmc.File().Name(), b, 0644)
 		if err == nil {
 			if cs.verbose {
 				printRepositories(repos.Repositories)
@@ -117,7 +117,7 @@ func (s *State) copyToDir(cs *copyState, src []gm.Repository) {
 }
 
 // isDir reports whether the file is in the local file system.
-func (s *State) isDir(cf gm.Repository) bool {
+func (s *State) isDir(cf manager.RepositoryEntry) bool {
 	info, err := os.Stat(cf.Path)
 	return err == nil && info.IsDir()
 }
@@ -126,7 +126,7 @@ func (s *State) isDir(cf gm.Repository) bool {
 // name. Files on the local machine
 // must be identified by absolute paths.
 // That is, they must be full paths.
-func (cs *copyState) glob(pattern string) (files []gm.Repository) {
+func (cs *copyState) glob(pattern string) (files []manager.RepositoryEntry) {
 	if pattern == "" {
 		cs.state.Exitf("empty path name")
 	}
@@ -134,7 +134,7 @@ func (cs *copyState) glob(pattern string) (files []gm.Repository) {
 	// Path on local machine?
 	if isLocal(pattern) {
 		for _, repoPath := range cs.state.GlobLocal(subcmd.Tilde(pattern)) {
-			files = append(files, gm.Repository{
+			files = append(files, manager.RepositoryEntry{
 				Name:       path.Base(repoPath),
 				Enabled:    true,
 				LastUpdate: time.Now(),
@@ -170,7 +170,7 @@ func isLocal(file string) bool {
 	return false
 }
 
-func printRepositories(repos []gm.Repository) {
+func printRepositories(repos []manager.RepositoryEntry) {
 	for _, repo := range repos {
 		log.Printf("repository added: %s", path.Base(repo.Path))
 	}

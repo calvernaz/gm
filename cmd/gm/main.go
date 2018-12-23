@@ -12,7 +12,7 @@ import (
 	"strings"
 	
 	"github.com/calvernaz/gm/flags"
-	"github.com/calvernaz/gm/gm"
+	"github.com/calvernaz/gm/manager"
 	"github.com/calvernaz/gm/subcmd"
 )
 
@@ -37,7 +37,7 @@ type State struct {
 	*subcmd.State
 	configFile []byte // The contents of the config file we loaded.
 
-	gmc        *gm.GitManagerConfig
+	gmc        *manager.GitManagerConfig
 }
 
 func main() {
@@ -57,7 +57,6 @@ func main() {
 	
 	// wait until operation  is done
 	state.gmc.Wait()
-	
 	state.ExitNow()
 }
 
@@ -78,7 +77,7 @@ func setup(fs *flag.FlagSet, args []string) (*State, []string, bool) {
 		return nil, nil, false
 	}
 	state := newState(strings.ToLower(fs.Arg(0)))
-	state.gmc = &gm.GitManagerConfig{Version: version}
+	state.gmc = &manager.GitManagerConfig{Version: version}
 	state.init()
 	
 	return state, fs.Args(), true
@@ -124,7 +123,7 @@ func printCommands() {
 	}
 	
 	// Display "shell" first as it's not in "commands".
-	_, _ = fmt.Fprintf(os.Stderr, "\tshell (Interactive mode)\n")
+	// _, _ = fmt.Fprintf(os.Stderr, "\tshell (Interactive mode)\n")
 	sort.Strings(cmdStrs)
 	// There may be dups; filter them.
 	prev := ""

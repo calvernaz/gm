@@ -1,4 +1,4 @@
-package gm
+package manager
 
 import (
 	"fmt"
@@ -10,20 +10,20 @@ import (
 	"github.com/calvernaz/gm/subcmd"
 )
 
-// Repository format entry
-type Repository struct {
-	// Repository Name
+// RepositoryEntry format entry
+type RepositoryEntry struct {
+	// RepositoryEntry Name
 	Name string `json:"name"`
 	// Tracking repository
 	Enabled bool `json:"enabled"`
 	// Last repository update
 	LastUpdate time.Time `json:"last_update"`
-	// Git Repository path
-	Path string
+	// Git RepositoryEntry path
+	Path string `json:"path"`
 }
 
 // Update updates the repository
-func (r Repository) Update() error {
+func (r RepositoryEntry) Update() error {
 	info("updating repository: %v", path.Base(r.Path))
 	
 	vcs, err := internal.VcsFromDir(subcmd.Tilde(r.Path))

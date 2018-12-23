@@ -1,4 +1,4 @@
-package gm
+package manager
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestUpdate(t *testing.T) {
-	repo := Repository{
+	repo := RepositoryEntry{
 		Name:       "test",
 		Enabled:    true,
 		LastUpdate: time.Now(),
