@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 	
 	"github.com/calvernaz/gm/internal"
@@ -38,6 +39,15 @@ func (r RepositoryEntry) Update() error {
 	}
 	//CheckIfError(err)
 	return nil
+}
+
+func (r RepositoryEntry) Download() error {
+	info("downloading repository: %v", path.Base(r.Name))
+	vcs := internal.VcsByCmd("git")
+	
+	repoName := path.Base(r.Name)
+	repoName = repoName[0:len(repoName)-len(filepath.Ext(".git"))]
+	return vcs.Create(filepath.Join(r.Path, repoName), r.Name)
 }
 
 // info should be used to describe the example commands that are about to run.

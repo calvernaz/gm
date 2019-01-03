@@ -30,6 +30,7 @@ var (
 		"config": (*State).config,
 		"add":    (*State).add,
 		"update": (*State).update,
+		"get":    (*State).get,
 	}
 )
 

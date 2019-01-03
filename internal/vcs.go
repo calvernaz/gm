@@ -78,9 +78,9 @@ var vcsList = []*vcsCmd{
 	vcsGit,
 }
 
-// vcsByCmd returns the version control system for the given
+// VcsByCmd returns the version control system for the given
 // command name (hg, git, svn, bzr).
-func vcsByCmd(cmd string) *vcsCmd {
+func VcsByCmd(cmd string) *vcsCmd {
 	for _, vcs := range vcsList {
 		if vcs.cmd == cmd {
 			return vcs
@@ -94,7 +94,7 @@ var vcsGit = &vcsCmd{
 	name: "Git",
 	cmd:  "git",
 	
-	createCmd:   []string{"clone {repo} {dir}", "-go-internal-cd {dir} submodule update --init --recursive"},
+	createCmd:   []string{"clone {repo} {dir}"},
 	downloadCmd: []string{"pull --ff-only", "submodule update --init --recursive"},
 	
 	tagCmd: []tagCmd{
@@ -231,9 +231,9 @@ func (v *vcsCmd) ping(scheme, repo string) error {
 	return v.runVerboseOnly(".", v.pingCmd, "scheme", scheme, "repo", repo)
 }
 
-// create creates a new copy of repo in dir.
+// Create creates a new copy of repo in dir.
 // The parent of dir must exist; dir must not.
-func (v *vcsCmd) create(dir, repo string) error {
+func (v *vcsCmd) Create(dir, repo string) error {
 	for _, cmd := range v.createCmd {
 		if err := v.run(".", cmd, "dir", dir, "repo", repo); err != nil {
 			return err
@@ -413,7 +413,7 @@ func bitbucketVCS(match map[string]string) error {
 			// VCS it uses. See issue 5375.
 			root := match["root"]
 			for _, vcs := range []string{"git", "hg"} {
-				if vcsByCmd(vcs).ping("https", root) == nil {
+				if VcsByCmd(vcs).ping("https", root) == nil {
 					resp.SCM = vcs
 					break
 				}
@@ -429,7 +429,7 @@ func bitbucketVCS(match map[string]string) error {
 		}
 	}
 	
-	if vcsByCmd(resp.SCM) != nil {
+	if VcsByCmd(resp.SCM) != nil {
 		match["vcs"] = resp.SCM
 		if resp.SCM == "git" {
 			match["repo"] += ".git"
