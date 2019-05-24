@@ -2,7 +2,11 @@
 
 ## How to use it
 
+### Build
 
+		go run make.go
+		
+### Use
 
 ## When to use it
 
