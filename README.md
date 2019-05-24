@@ -4,7 +4,7 @@
 
 ### Build
 
-		go run make.go
+`go run make.go`
 		
 ### Use
 
