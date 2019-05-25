@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"sort"
 	"strings"
-	
+
 	"github.com/calvernaz/gm/flags"
 	"github.com/calvernaz/gm/manager"
 	"github.com/calvernaz/gm/subcmd"
@@ -31,6 +31,7 @@ var (
 		"add":    (*State).add,
 		"update": (*State).update,
 		"get":    (*State).get,
+		"del":    (*State).del,
 	}
 )
 
@@ -52,10 +53,10 @@ func main() {
 
 	// loop accepting and running operations
 	go state.gmc.Loop()
-	
+
 	// run the command
 	state.run(args)
-	
+
 	// wait until operation  is done
 	state.gmc.Wait()
 	state.ExitNow()
@@ -80,7 +81,7 @@ func setup(fs *flag.FlagSet, args []string) (*State, []string, bool) {
 	state := newState(strings.ToLower(fs.Arg(0)))
 	state.gmc = &manager.GitManagerConfig{Version: version}
 	state.init()
-	
+
 	return state, fs.Args(), true
 }
 
@@ -122,7 +123,7 @@ func printCommands() {
 	for cmd := range commands {
 		cmdStrs = append(cmdStrs, cmd)
 	}
-	
+
 	// Display "shell" first as it's not in "commands".
 	// _, _ = fmt.Fprintf(os.Stderr, "\tshell (Interactive mode)\n")
 	sort.Strings(cmdStrs)
@@ -156,7 +157,7 @@ func (s *State) init() {
 		s.gmc.Close()
 		return
 	}
-	
+
 	data, err := ioutil.ReadAll(s.gmc.File())
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "\tError reading config file: %v", err)
@@ -219,20 +220,21 @@ func (s *State) writePrettyOut(file string, data []byte) {
 		if err := json.Unmarshal(data, &dat); err != nil {
 			s.Exitf("failed to output: %v", err)
 		}
-		
+
 		b, err := json.MarshalIndent(dat, "", "  ")
 		if err != nil {
 			s.Exitf("failed to output: %v", err)
 		}
-		
+
 		_, err = s.Stdout.Write(b)
 		if err != nil {
 			s.Exitf("copying to output failed: %v", err)
 		}
-		
+
 		return
 	}
 }
+
 // usageAndExit prints usage message from provided FlagSet,
 // and exits the program with status code 2.
 func usageAndExit(fs *flag.FlagSet) {
