@@ -20,8 +20,7 @@ type Operation struct {
 func (op Operation) Execute() error {
 	switch op.OpType {
 	case Update:
-		err := op.Repo.Update()
-		return err
+		return op.Repo.Update()
 	case Download:
 		return op.Repo.Download()
 	default:

@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	body = "%s\t \x1b[31;1m%s\x1b[0m"
+	bodySuccess = "%s\t \x1b[31;1m%s\x1b[0m"
+	bodyError = "%s\t \x1b[31;1m%s\x1b[33;1m ( %s )\x1b[0m"
 )
 
 type BufferLog struct {
@@ -27,7 +28,11 @@ func NewBufferLog() *BufferLog {
 func (b *BufferLog) Buffer(args ...string) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	_, _ = fmt.Fprintln(b.writer, fmt.Sprintf(body, args[0], args[1]))
+	if len(args) == 2 {
+		_, _ = fmt.Fprintln(b.writer, fmt.Sprintf(bodySuccess, args[0], args[1]))
+	} else {
+		_, _ = fmt.Fprintln(b.writer, fmt.Sprintf(bodyError, args[0], args[1], args[2]))
+	}
 }
 
 func (b *BufferLog) Print() {

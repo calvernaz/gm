@@ -4,10 +4,11 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	
-	"github.com/calvernaz/gm/log"
+
 	"github.com/pkg/errors"
-	
+
+	"github.com/calvernaz/gm/log"
+
 	"go4.org/xdgdir"
 )
 
@@ -26,14 +27,14 @@ type GitManagerFile struct {
 
 type GitManagerConfig struct {
 	Version string
-	
+
 	bl *log.BufferLog
-	
+
 	file *os.File
-	
+
 	wg sync.WaitGroup
 	ch chan Operation
-	
+
 }
 
 // Open creates the config file if it doesn't exist, opens it otherwise.
@@ -43,7 +44,7 @@ func (gmc *GitManagerConfig) Open(path string) (err error) {
 	if path == "" {
 		path = configPath
 	}
-	
+
 	var file *os.File
 	file, err = xdgdir.Config.Open(path)
 	if err != nil {
@@ -53,18 +54,18 @@ func (gmc *GitManagerConfig) Open(path string) (err error) {
 				return errors.New("failed to create config file")
 			}
 		}
-		
+
 		if err != nil {
 			return errors.New("failed to open the config file")
 		}
 	}
-	
+
 	// configuration file
 	gmc.file = file
-	
+
 	// buffered log
 	gmc.bl = log.NewBufferLog()
-	
+
 	return err
 }
 
@@ -93,7 +94,7 @@ func (gmc *GitManagerConfig) Loop() {
 			if ok {
 				err := op.Execute()
 				if err != nil {
-					gmc.bl.Buffer(op.Repo.Name, Failed)
+					gmc.bl.Buffer(op.Repo.Name, Failed, err.Error())
 				} else {
 					gmc.bl.Buffer(op.Repo.Name, Succeed)
 				}
