@@ -31,7 +31,7 @@ var (
 		"add":    (*State).add,
 		"update": (*State).update,
 		"get":    (*State).get,
-		"del":    (*State).del,
+		"delete": (*State).del,
 	}
 )
 
@@ -39,7 +39,7 @@ type State struct {
 	*subcmd.State
 	configFile []byte // The contents of the config file we loaded.
 
-	gmc        *manager.GitManagerConfig
+	gmc *manager.GitManagerConfig
 }
 
 func main() {

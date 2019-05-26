@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/calvernaz/gm/manager"
@@ -27,7 +28,7 @@ func (s *State) del(args ...string) {
 	s.deleteCommand(cs, fs.Args())
 }
 
-func (s *State) deleteCommand(cs *deleteState, repositoryName []string) {
+func (s *State) deleteCommand(cs *deleteState, repositoryNames []string) {
 	f := s.gmc.File()
 	_, err := f.Stat()
 	if err != nil {
@@ -47,7 +48,7 @@ func (s *State) deleteCommand(cs *deleteState, repositoryName []string) {
 	}
 
 	for i, repo := range repos.Repositories {
-		if ContainsString(repositoryName, repo.Name) {
+		if ContainsString(repositoryNames, repo.Name) {
 			repos.Repositories = append(repos.Repositories[:i], repos.Repositories[i+1:]...)
 		}
 	}
@@ -58,9 +59,11 @@ func (s *State) deleteCommand(cs *deleteState, repositoryName []string) {
 		if err != nil {
 			s.Exitf("failed to add repository: %v", err)
 		}
+		for _, repositoryName := range repositoryNames {
+			fmt.Printf("%q deleted", repositoryName)
+		}
 		return
 	}
-
 }
 
 func ContainsString(sl []string, v string) bool {
