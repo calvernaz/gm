@@ -2,17 +2,17 @@
 
 ## How to use it
 
-### Build
+### Build and Install
 
 `go run make.go`
 
 ### Use
 
-Add a repository:
+Add a repository
 
 `gm add ~/repositories/gocv.io/x/gocv`
 
-Then, check your configuration:
+Then, check your configuration
 
 `gm config -p` // -p means pretty print   
 		
