@@ -15,18 +15,18 @@ import (
 type vcsCmd struct {
 	name string
 	cmd  string // name of binary to invoke command
-	
+
 	createCmd   []string // commands to download a fresh copy of a repository
 	downloadCmd []string // commands to download updates into an existing repository
-	
+
 	tagCmd         []tagCmd // commands to list tags
 	tagLookupCmd   []tagCmd // commands to lookup tags before running tagSyncCmd
 	tagSyncCmd     []string // commands to sync to specific tag
 	tagSyncDefault []string // commands to sync to default tag
-	
+
 	scheme  []string
 	pingCmd string
-	
+
 	remoteRepo  func(v *vcsCmd, rootDir string) (remoteRepo string, err error)
 	resolveRepo func(v *vcsCmd, rootDir, remoteRepo string) (realRepo string, err error)
 }
@@ -93,10 +93,10 @@ func VcsByCmd(cmd string) *vcsCmd {
 var vcsGit = &vcsCmd{
 	name: "Git",
 	cmd:  "git",
-	
+
 	createCmd:   []string{"clone {repo} {dir}"},
 	downloadCmd: []string{"pull --ff-only", "submodule update --init --recursive"},
-	
+
 	tagCmd: []tagCmd{
 		// tags/xxx matches a git tag named xxx
 		// origin/xxx matches a git branch named xxx on the default remote repository
@@ -112,7 +112,7 @@ var vcsGit = &vcsCmd{
 	// DO NOT add 'checkout master' here.
 	// See golang.org/issue/9032.
 	tagSyncDefault: []string{"submodule update --init --recursive"},
-	
+
 	scheme:     []string{"git", "https", "http", "git+ssh", "ssh"},
 	pingCmd:    "ls-remote {scheme}://{repo}",
 	remoteRepo: gitRemoteRepo,
@@ -136,7 +136,7 @@ func gitRemoteRepo(vcsGit *vcsCmd, rootDir string) (remoteRepo string, err error
 		return "", err
 	}
 	out := strings.TrimSpace(string(outb))
-	
+
 	var repoURL *url.URL
 	if m := scpSyntaxRe.FindStringSubmatch(out); m != nil {
 		// Match SCP-like syntax and convert it to a URL.
@@ -154,7 +154,7 @@ func gitRemoteRepo(vcsGit *vcsCmd, rootDir string) (remoteRepo string, err error
 			return "", err
 		}
 	}
-	
+
 	// Iterate over insecure schemes too, because this function simply
 	// reports the state of the repo. If we can't see insecure schemes then
 	// we can't report the actual repo URL.
@@ -202,16 +202,16 @@ func (v *vcsCmd) run1(dir string, cmdline string, keyval []string, verbose bool)
 	for i, arg := range args {
 		args[i] = expand(m, arg)
 	}
-	
+
 	_, err := exec.LookPath(v.cmd)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "missing %s command.", v.name)
 		return nil, err
 	}
-	
+
 	cmd := exec.Command(v.cmd, args...)
 	cmd.Dir = dir
-	
+
 	out, err := cmd.Output()
 	if err != nil {
 		if verbose {
@@ -288,7 +288,7 @@ func (v *vcsCmd) tagSync(dir, tag string) error {
 			}
 		}
 	}
-	
+
 	if tag == "" && v.tagSyncDefault != nil {
 		for _, cmd := range v.tagSyncDefault {
 			if err := v.run(dir, cmd); err != nil {
@@ -297,7 +297,7 @@ func (v *vcsCmd) tagSync(dir, tag string) error {
 		}
 		return nil
 	}
-	
+
 	for _, cmd := range v.tagSyncCmd {
 		if err := v.run(dir, cmd, "tag", tag); err != nil {
 			return err
@@ -315,9 +315,9 @@ func VcsFromDir(dir string) (vcs *vcsCmd, err error) {
 	dir = filepath.Clean(dir)
 	var vcsRet *vcsCmd
 	var rootRet string
-	
+
 	origDir := dir
-	
+
 	for _, vcs := range vcsList {
 		if _, err := os.Stat(filepath.Join(dir, "."+vcs.cmd)); err == nil {
 			root := filepath.ToSlash(dir)
@@ -337,11 +337,11 @@ func VcsFromDir(dir string) (vcs *vcsCmd, err error) {
 				filepath.Join(dir, rootRet), vcsRet.cmd, filepath.Join(dir, root), vcs.cmd)
 		}
 	}
-	
+
 	if vcsRet != nil {
 		return vcsRet, nil
 	}
-	
+
 	return nil, fmt.Errorf("directory %q is not using a known version control system", origDir)
 }
 
@@ -351,7 +351,7 @@ type RepoRoot struct {
 	Root     string // import path corresponding to root of repo
 	IsCustom bool   // defined by served <meta> tags (as opposed to hard-coded pattern)
 	VCS      string // vcs type ("mod", "git", ...)
-	
+
 	vcs *vcsCmd // internal: vcs command access
 }
 
@@ -401,7 +401,7 @@ func bitbucketVCS(match map[string]string) error {
 	if err := noVCSSuffix(match); err != nil {
 		return err
 	}
-	
+
 	var resp struct {
 		SCM string `json:"scm"`
 	}
@@ -419,7 +419,7 @@ func bitbucketVCS(match map[string]string) error {
 				}
 			}
 		}
-		
+
 		if resp.SCM == "" {
 			return err
 		}
@@ -428,7 +428,7 @@ func bitbucketVCS(match map[string]string) error {
 			return fmt.Errorf("decoding %s: %v", url, err)
 		}
 	}
-	
+
 	if VcsByCmd(resp.SCM) != nil {
 		match["vcs"] = resp.SCM
 		if resp.SCM == "git" {
@@ -436,6 +436,6 @@ func bitbucketVCS(match map[string]string) error {
 		}
 		return nil
 	}
-	
+
 	return fmt.Errorf("unable to detect version control system for bitbucket.org/ path")
 }

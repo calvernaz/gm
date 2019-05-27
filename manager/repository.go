@@ -6,10 +6,15 @@ import (
 	"path"
 	"path/filepath"
 	"time"
-	
+
 	"github.com/calvernaz/gm/internal"
 	"github.com/calvernaz/gm/subcmd"
 )
+
+type Repository interface {
+	Update() error
+	Download() error
+}
 
 // RepositoryEntry format entry
 type RepositoryEntry struct {
@@ -23,16 +28,18 @@ type RepositoryEntry struct {
 	Path string `json:"path"`
 }
 
+var _ Repository = (*RepositoryEntry)(nil)
+
 // Update updates the repository
 func (r RepositoryEntry) Update() error {
 	info("updating repository: %v", path.Base(r.Path))
-	
+
 	vcs, err := internal.VcsFromDir(subcmd.Tilde(r.Path))
 	if err != nil {
 		return err
 	}
 	//CheckIfError(err)
-	
+
 	err = vcs.Download(r.Path)
 	if err != nil {
 		return err
@@ -44,10 +51,12 @@ func (r RepositoryEntry) Update() error {
 func (r RepositoryEntry) Download() error {
 	info("downloading repository: %v", path.Base(r.Name))
 	vcs := internal.VcsByCmd("git")
-	
+
 	repoName := path.Base(r.Name)
 	repoName = repoName[0:len(repoName)-len(filepath.Ext(".git"))]
-	return vcs.Create(filepath.Join(r.Path, repoName), r.Name)
+	err := vcs.Create(filepath.Join(r.Path, repoName), r.Name)
+	CheckIfError(err)
+	return err
 }
 
 // info should be used to describe the example commands that are about to run.
