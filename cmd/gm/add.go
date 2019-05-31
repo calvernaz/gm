@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	
+
 	"github.com/calvernaz/gm/log"
 	"github.com/calvernaz/gm/manager"
 	"github.com/calvernaz/gm/subcmd"
@@ -18,15 +18,15 @@ import (
 
 func (s *State) add(args ...string) {
 	const help = ``
-	
+
 	// commands
 	fs := flag.NewFlagSet("add", flag.ExitOnError)
 	verbose := fs.Bool("v", false, "log each repository as it is added")
 	recur := fs.Bool("R", false, "recursively add repositories")
 	overwrite := fs.Bool("overwrite", true, "overwrite existing repositories")
-	
+
 	s.ParseFlags(fs, args, help, "add repository")
-	
+
 	cs := &copyState{
 		state:     s,
 		flagSet:   fs,
@@ -39,7 +39,7 @@ func (s *State) add(args ...string) {
 	for _, repo := range fs.Args() {
 		repositories = append(repositories, cs.glob(repo)...)
 	}
-	
+
 	s.copyCommand(cs, repositories)
 }
 
@@ -57,7 +57,7 @@ func (s *State) copyCommand(cs *copyState, repositories []manager.RepositoryEntr
 		s.Exit(errors.New("no repositories to add"))
 		usageAndExit(cs.flagSet)
 	}
-	
+
 	s.copyToDir(cs, repositories)
 }
 
@@ -69,8 +69,9 @@ func (s *State) copyToDir(cs *copyState, src []manager.RepositoryEntry) {
 	if err != nil {
 		s.Exitf("failed to obtain file info")
 		usageAndExit(cs.flagSet)
+		return
 	}
-	
+
 	repos := manager.GitManagerFile{}
 	if fi.Size() <= 0 {
 		repos.Repositories = append(repos.Repositories, src...)
@@ -88,7 +89,7 @@ func (s *State) copyToDir(cs *copyState, src []manager.RepositoryEntry) {
 		}
 		s.Exitf("failed to marshal repositories: %v", err)
 	}
-	
+
 	content, err := ioutil.ReadFile(s.gmc.File().Name())
 	if err != nil {
 		s.Exitf("failed reading the configuration file: %v", err)
@@ -99,7 +100,7 @@ func (s *State) copyToDir(cs *copyState, src []manager.RepositoryEntry) {
 	if err != nil {
 		s.Exitf("failed to read repositories", err)
 	}
-	
+
 	repos.Repositories = append(repos.Repositories, src...)
 	b, err := json.Marshal(repos)
 	if err == nil {
@@ -110,7 +111,7 @@ func (s *State) copyToDir(cs *copyState, src []manager.RepositoryEntry) {
 			}
 		}
 	}
-	
+
 	if err != nil {
 		s.Exitf("failed writing repositories: %v", err)
 	}
@@ -130,7 +131,7 @@ func (cs *copyState) glob(pattern string) (files []manager.RepositoryEntry) {
 	if pattern == "" {
 		cs.state.Exitf("empty path name")
 	}
-	
+
 	// Path on local machine?
 	if isLocal(pattern) {
 		for _, repoPath := range cs.state.GlobLocal(subcmd.Tilde(pattern)) {
@@ -143,7 +144,7 @@ func (cs *copyState) glob(pattern string) (files []manager.RepositoryEntry) {
 		}
 		return files
 	}
-	
+
 	// Extra check to catch use of relative path on local machine.
 	if !strings.Contains(pattern, "@") {
 		cs.state.Exitf("local pattern not qualified path: %s", pattern)

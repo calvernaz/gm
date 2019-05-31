@@ -81,6 +81,7 @@ func (gmc *GitManagerConfig) Close() {
 	close(gmc.ch)
 }
 
+// File the configuration file description
 func (gmc *GitManagerConfig) File() *os.File {
 	return gmc.file
 }
