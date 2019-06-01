@@ -1,6 +1,8 @@
 package manager
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sync"
@@ -114,4 +116,26 @@ func (gmc *GitManagerConfig) Run(operation Operation) {
 func (gmc *GitManagerConfig) Wait() {
 	gmc.wg.Wait()
 	gmc.bl.Print()
+}
+
+func (gmc *GitManagerConfig) RemoveDups(entries []RepositoryEntry) []RepositoryEntry {
+	bytes, _ := ioutil.ReadAll(gmc.file)
+
+	var configFile GitManagerFile
+	_ = json.Unmarshal(bytes, &configFile)
+
+	all := append(configFile.Repositories, entries...)
+	j := 0
+	for i := 1; i < len(all); i++ {
+		if filepath.Clean(all[j].Path) == filepath.Clean(all[i].Path) {
+			continue
+		}
+		j++
+		// preserve the original data
+		// in[i], in[j] = in[j], in[i]
+		// only set what is required
+		all[j] = all[i]
+	}
+	result := all[:j+1]
+	return result
 }

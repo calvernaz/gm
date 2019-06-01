@@ -73,7 +73,7 @@ func main()  {
 
 	// run the command
 	if err := cmd.Run(); err != nil {
-		log.Fatal("error building main binaries: %v\n%s", err, output.String())
+		log.Fatalf("error building main binaries: %v\n%s", err, output.String())
 	}
 }
 

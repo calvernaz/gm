@@ -74,7 +74,8 @@ func (s *State) copyToDir(cs *copyState, src []manager.RepositoryEntry) {
 
 	repos := manager.GitManagerFile{}
 	if fi.Size() <= 0 {
-		repos.Repositories = append(repos.Repositories, src...)
+		repos.Repositories = s.gmc.RemoveDups(append(repos.Repositories, src...))
+
 		b, err := json.Marshal(repos)
 		if err == nil {
 			err = ioutil.WriteFile(s.gmc.File().Name(), b, 0644)
@@ -101,7 +102,7 @@ func (s *State) copyToDir(cs *copyState, src []manager.RepositoryEntry) {
 		s.Exitf("failed to read repositories", err)
 	}
 
-	repos.Repositories = append(repos.Repositories, src...)
+	repos.Repositories = s.gmc.RemoveDups(append(repos.Repositories, src...))
 	b, err := json.Marshal(repos)
 	if err == nil {
 		err = ioutil.WriteFile(s.gmc.File().Name(), b, 0644)
