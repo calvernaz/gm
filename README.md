@@ -12,9 +12,9 @@ Add a repository
 
 `gm add ~/repositories/gocv.io/x/gocv`
 
-Or clone remote repository and add to configuration
+Or clone remote repository and add to configuration ( the parent must exist )
 
-`gm get https://github.com/upspin/upspin.git ~/repositories/upspin` // the parent must exist
+`gm get https://github.com/upspin/upspin.git ~/repositories/upspin`
 
 Then, check your configuration
 
