@@ -195,11 +195,11 @@ func (s *State) runCommand(path string, args ...string) {
 	}
 }
 
-// run runs a single command specified by the arguments, which should begin with
-// the subcommand ("ls", "info", etc.).
 func (s *State) run(args []string) {
 	cmd := s.getCommand(args[0])
-	cmd(s, args[1:]...)
+	if cmd != nil {
+		cmd(s, args[1:]...)
+	}
 }
 
 // writeOut writes to the named file or to stdout if it is empty

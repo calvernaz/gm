@@ -25,11 +25,11 @@ func NewBufferLog() *BufferLog {
 	}
 }
 
-func (b *BufferLog) Buffer(args ...string) {
+func (b *BufferLog) Buffer(args ...interface{}) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if len(args) == 2 {
-		_, _ = fmt.Fprintln(b.writer, fmt.Sprintf(bodySuccess, args[0], args[1]))
+		_, _ = fmt.Fprintln(b.writer, info(bodySuccess, args...))
 	} else {
 		_, _ = fmt.Fprintln(b.writer, fmt.Sprintf(bodyError, args[0], args[1], args[2]))
 	}
@@ -39,4 +39,9 @@ func (b *BufferLog) Print() {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	_ = b.writer.Flush()
+}
+
+func info(format string , args ...interface{}) string {
+	msg := fmt.Sprintf(format, args...)
+	return fmt.Sprintf("\x1b[34;1m%s\x1b[0m\n", msg)
 }
