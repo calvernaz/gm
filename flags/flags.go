@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/calvernaz/gm/log"
+	"github.com/calvernaz/gm/manager"
 )
 
 const (
@@ -77,17 +77,17 @@ func (f logFlag) String() string {
 
 // Set implements flag.Value.
 func (f *logFlag) Set(level string) error {
-	err := log.SetLevel(level)
+	err := manager.SetLevel(level)
 	if err != nil {
 		return err
 	}
-	*f = logFlag(log.GetLevel())
+	*f = logFlag(manager.GetLevel())
 	return nil
 }
 
 // Get implements flag.Getter.
 func (logFlag) Get() interface{} {
-	return log.GetLevel()
+	return manager.GetLevel()
 }
 
 // Parse registers the command-line flags for the given default flags list, plus

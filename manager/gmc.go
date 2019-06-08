@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/calvernaz/gm/log"
 
 	"go4.org/xdgdir"
 )
@@ -29,8 +28,6 @@ type GitManagerFile struct {
 
 type GitManagerConfig struct {
 	Version string
-
-	bl *log.BufferLog
 
 	file *os.File
 
@@ -65,9 +62,6 @@ func (gmc *GitManagerConfig) Open(path string) (err error) {
 	// configuration file
 	gmc.file = file
 
-	// buffered log
-	gmc.bl = log.NewBufferLog()
-
 	return err
 }
 
@@ -76,7 +70,7 @@ func (gmc *GitManagerConfig) Close() {
 	if gmc.file != nil {
 		err := gmc.file.Close()
 		if err != nil {
-			log.Error.Printf("failed to close file: %v", err)
+			Error.Printf("failed to close file: %v", err)
 		}
 	}
 
@@ -97,9 +91,11 @@ func (gmc *GitManagerConfig) Loop() {
 			if ok {
 				err := op.Execute()
 				if err != nil {
-					gmc.bl.Buffer(op.Repo.Name, Failed, err.Error())
+					//gmc.bl.Buffer(op.Repo.Name, Failed, err.Error())
+					ErrorLog("failed to update repository: %v", op.Repo.Name)
 				} else {
-					gmc.bl.Buffer(op.Repo.Name, Succeed)
+					//gmc.bl.Buffer(op.Repo.Name, Succeed)
+					InfoLog("updated repository: %v", op.Repo.Name)
 				}
 			}
 			gmc.wg.Done()
@@ -115,7 +111,6 @@ func (gmc *GitManagerConfig) Run(operation Operation) {
 
 func (gmc *GitManagerConfig) Wait() {
 	gmc.wg.Wait()
-	gmc.bl.Print()
 }
 
 func (gmc *GitManagerConfig) RemoveDups(entries []RepositoryEntry) []RepositoryEntry {

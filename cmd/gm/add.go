@@ -10,11 +10,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/calvernaz/gm/log"
+	"github.com/pkg/errors"
+
 	"github.com/calvernaz/gm/manager"
 	"github.com/calvernaz/gm/subcmd"
-	"github.com/pkg/errors"
 )
+
+type copyState struct {
+	state     *State
+	flagSet   *flag.FlagSet // Used only to call Usage.
+	overwrite bool
+	recur     bool
+	verbose   bool
+}
 
 func (s *State) add(args ...string) {
 	const help = ``
@@ -41,14 +49,6 @@ func (s *State) add(args ...string) {
 	}
 
 	s.copyCommand(cs, repositories)
-}
-
-type copyState struct {
-	state     *State
-	flagSet   *flag.FlagSet // Used only to call Usage.
-	overwrite bool
-	recur     bool
-	verbose   bool
 }
 
 func (s *State) copyCommand(cs *copyState, repositories []manager.RepositoryEntry) {
@@ -174,6 +174,6 @@ func isLocal(file string) bool {
 
 func printRepositories(repos []manager.RepositoryEntry) {
 	for _, repo := range repos {
-		log.Printf("repository added: %s", path.Base(repo.Path))
+		manager.Printf("repository added: %s", path.Base(repo.Path))
 	}
 }

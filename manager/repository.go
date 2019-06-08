@@ -32,7 +32,7 @@ var _ Repository = (*RepositoryEntry)(nil)
 
 // Update updates the repository
 func (r RepositoryEntry) Update() error {
-	info("updating repository: %v", path.Base(r.Path))
+	InfoLog("updating repository: %v", path.Base(r.Path))
 
 	vcs, err := internal.VcsFromDir(subcmd.Tilde(r.Path))
 	if err != nil {
@@ -49,7 +49,7 @@ func (r RepositoryEntry) Update() error {
 }
 
 func (r RepositoryEntry) Download() error {
-	info("downloading repository: %v", path.Base(r.Name))
+	InfoLog("downloading repository: %v", path.Base(r.Name))
 	vcs := internal.VcsByCmd("git")
 
 	repoName := path.Base(r.Name)
@@ -57,11 +57,6 @@ func (r RepositoryEntry) Download() error {
 	err := vcs.Create(filepath.Join(r.Path, repoName), r.Name)
 	CheckIfError(err)
 	return err
-}
-
-// info should be used to describe the example commands that are about to run.
-func info(format string, args ...interface{}) {
-	fmt.Printf("\x1b[34;1m%s\x1b[0m\n", fmt.Sprintf(format, args...))
 }
 
 // CheckIfError should be used to naively panics if an error is not nil.

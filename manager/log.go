@@ -1,4 +1,4 @@
-package log
+package manager
 
 import (
 	"bytes"
@@ -22,7 +22,6 @@ type Logger interface {
 
 	// Fatal writes a message to the log and aborts.
 	Fatal(v ...interface{})
-
 	// Fatalf writes a formated message to the log and aborts.
 	Fatalf(format string, v ...interface{})
 }
@@ -279,6 +278,19 @@ func At(level string) bool {
 		return false
 	}
 	return g.currentLevel <= l
+}
+
+// info should be used to describe the example commands that are about to run.
+func InfoLog(format string, args ...interface{}) {
+	fmt.Printf("\x1b[34;1m%s\x1b[0m\n", fmt.Sprintf(format, args...))
+}
+
+func ErrorLog(format string, args ...interface{}) {
+	fmt.Printf("\x1b[31;1m%s\x1b[0m\n", fmt.Sprintf(format, args...))
+}
+
+func PrintError(format string, v ...interface{}) {
+	Error.Printf(format, v...)
 }
 
 // Printf writes a formatted message to the log.
