@@ -1,30 +1,30 @@
 # Git Manager
 
-## How to use it
+	A little helper for your git repositories.
 
-### Build and Install
+## Build and Install
 
 `go run make.go`
 
-### Use
+## How to use it
 
-Add a repository
+- Add a repository
 
 `gm add ~/repositories/gocv.io/x/gocv`
 
-Or clone remote repository and add to configuration ( the parent must exist )
+- Or clone remote repository and add to configuration ( the parent must exist )
 
 `gm get https://github.com/upspin/upspin.git ~/repositories/upspin`
 
-Then, check your configuration
+- Then, check your configuration
 
 `gm config -p` // -p means pretty print
 
-Then trigger an update for the repositories
+- Then trigger an update for the repositories
 
 `gm update`
 
-You can also delete a repository
+- You can also delete a repository
 
 `gm delete gocv`
 
